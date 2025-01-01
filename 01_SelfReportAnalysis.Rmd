@@ -1,0 +1,163 @@
+---
+title: "Rube This Cube: Self-Report Analysis"
+author: "aiswary-a"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include = FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+# Loading In: Packages & CSV
+```{r}
+
+library(pacman)
+pacman::p_load(tidyverse)
+
+overlord <- read_csv(
+  "C:/Users/aisro/Desktop/UNI/BSc CogSci - 3rd Sem/Perception and Action/EXAM_Rubiks/PA_RubeCube_Experiment.csv/PA_RubeCube_Experiment.csv"
+)
+
+df <- overlord[, c(2, 4, 5, 6, 7, 8, 9, 10, 11, 12)]
+colnames(df) <- c(
+  "condition",
+  "id",
+  "gender",
+  "age",
+  "1_confidence",
+  "1_difficulty",
+  "2_confidence",
+  "2_difficulty",
+  "3_confidence",
+  "3_difficulty",
+  "performance"
+)
+
+df <- df %>% 
+  filter(id != "SR08")
+
+```
+## Restructuring Data for Plotting
+```{r}
+
+df_long <- df %>%
+  pivot_longer(
+    cols = starts_with(c("1_", "2_", "3_")),
+    names_to = c("time", "metric"),           
+    names_pattern = "(\\d)_(.*)",             
+    values_to = "score"
+  )
+
+df_summary <- df_long %>%
+  group_by(condition, time, metric) %>%
+  summarise(
+    mean = mean(score, na.rm = TRUE),
+    se = sd(score, na.rm = TRUE) / sqrt(n())
+  )
+
+```
+
+
+## Plotting Self-Assessments over Time
+```{r}
+
+# confidence plot
+plot_confidence <- ggplot(df_summary %>% filter(metric == "confidence"), aes(x = time, y = mean, color = condition, group = condition)) +
+  geom_line() + 
+  geom_point() +
+#  geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.2) + ## nicer to have when conditions have their own graphs, otherwise messy
+  labs(x = "Time Point", y = "Average Confidence", color = "Condition") +
+  theme_minimal() +
+#  facet_wrap(~condition) + # to have 4 separate graphs
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+plot_confidence
+
+# difficulty plot
+plot_difficulty <- ggplot(df_summary %>% filter(metric == "difficulty"), aes(x = time, y = mean, color = condition, group = condition)) +
+  geom_line() + 
+  geom_point() +
+ # geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.2) + ## nicer to have when conditions have their own graphs, otherwise messy
+  labs(x = "Time Point", y = "Average Perceived Difficulty", color = "Condition") +
+  theme_minimal() +
+#  facet_wrap(~condition) + # to have 4 separate graphs
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+plot_difficulty
+
+```
+## Friedman Test (Non-Parametric ANOVA)
+```{r}
+
+# Friedman Test for Confidence
+friedman_confidence <- friedman.test(
+  score ~ time | id,
+  data = df_long %>% filter(metric == "confidence")
+)
+
+# Friedman Test for Difficulty
+friedman_difficulty <- friedman.test(
+  score ~ time | id,
+  data = df_long %>% filter(metric == "difficulty")
+)
+
+# Results!
+#friedman_confidence
+#friedman_difficulty
+
+cat("\nFriedman Test Results for Confidence:\n")
+cat("Chi-squared: ", friedman_confidence$statistic, "\n")
+cat("Degrees of Freedom: ", friedman_confidence$parameter, "\n")
+cat("p-value: ", friedman_confidence$p.value, "\n")
+if (friedman_confidence$p.value < 0.05) {
+  cat("Interpretation: There is a significant difference in confidence across the time points.\n")
+} else {
+  cat("Interpretation: There is no significant difference in confidence across the time points.\n")
+}
+
+cat("\nFriedman Test Results for Difficulty:\n")
+cat("Chi-squared: ", friedman_difficulty$statistic, "\n")
+cat("Degrees of Freedom: ", friedman_difficulty$parameter, "\n")
+cat("p-value: ", friedman_difficulty$p.value, "\n")
+if (friedman_difficulty$p.value < 0.05) {
+  cat("Interpretation: There is a significant difference in difficulty across the time points.\n")
+} else {
+  cat("Interpretation: There is no significant difference in difficulty across the time points.\n")
+}
+
+```
+## Post-Hoc Testing
+```{r}
+
+df_long$score <- as.numeric(df_long$score)
+df_long$time <- as.factor(df_long$time)
+
+## NOT WORKING AT THE MOMENT
+
+# Post-Hoc Wilcoxon Signed-Rank Test for Confidence (Pairwise comparisons)
+pairwise_wilcox_confidence <- df_long %>%
+  filter(metric == "confidence") %>%
+  pairwise.wilcox.test(score ~ time, paired = TRUE, p.adjust.method = "bonferroni")
+
+str(df_long)
+
+# Post-Hoc Wilcoxon Signed-Rank Test for Difficulty (Pairwise comparisons)
+pairwise_wilcox_difficulty <- df_long %>%
+  filter(metric == "difficulty") %>%
+  pairwise.wilcox.test(score, time, paired = TRUE, p.adjust.method = "bonferroni")
+
+# Results!
+
+cat("\nPost-Hoc Wilcoxon Signed-Rank Test Results for Confidence:\n")
+print(pairwise_wilcox_confidence)
+
+cat("\nPost-Hoc Wilcoxon Signed-Rank Test Results for Difficulty:\n")
+print(pairwise_wilcox_difficulty)
+
+```
+
+
+

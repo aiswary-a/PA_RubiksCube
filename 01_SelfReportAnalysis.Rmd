@@ -2,7 +2,9 @@
 title: "Rube This Cube: Self-Report Analysis"
 author: "aiswary-a"
 date: "`r Sys.Date()`"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include = FALSE}
@@ -12,10 +14,12 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Loading In: Packages & CSV
-```{r}
+```{r, results = 'hide', warning = FALSE}
 
 library(pacman)
-pacman::p_load(tidyverse)
+pacman::p_load(tidyverse,
+               PMCMRplus # for post-hoc Nemenyi test
+               )
 
 overlord <- read_csv(
   "C:/Users/aisro/Desktop/UNI/BSc CogSci - 3rd Sem/Perception and Action/EXAM_Rubiks/PA_RubeCube_Experiment.csv/PA_RubeCube_Experiment.csv"
@@ -41,7 +45,7 @@ df <- df %>%
 
 ```
 ## Restructuring Data for Plotting
-```{r}
+```{r, warning = FALSE, message = FALSE}
 
 df_long <- df %>%
   pivot_longer(
@@ -132,32 +136,30 @@ if (friedman_difficulty$p.value < 0.05) {
 ## Post-Hoc Testing
 ```{r}
 
-df_long$score <- as.numeric(df_long$score)
-df_long$time <- as.factor(df_long$time)
+# Post-Hoc Nemenyi Test
 
-## NOT WORKING AT THE MOMENT
+p_load(PMCMRplus)
 
-# Post-Hoc Wilcoxon Signed-Rank Test for Confidence (Pairwise comparisons)
-pairwise_wilcox_confidence <- df_long %>%
-  filter(metric == "confidence") %>%
-  pairwise.wilcox.test(score ~ time, paired = TRUE, p.adjust.method = "bonferroni")
+# Post-Hoc Nemeyi Test for Confidence
+posthocNemenyi_confidence <- PMCMRplus::frdAllPairsNemenyiTest(
+  score ~ time | id, data = df_long %>% filter(metric == "confidence")
+  )
 
-str(df_long)
-
-# Post-Hoc Wilcoxon Signed-Rank Test for Difficulty (Pairwise comparisons)
-pairwise_wilcox_difficulty <- df_long %>%
-  filter(metric == "difficulty") %>%
-  pairwise.wilcox.test(score, time, paired = TRUE, p.adjust.method = "bonferroni")
+# Post-Hoc Nemeyi Test for Difficulty
+posthocNemenyi_difficulty <- PMCMRplus::frdAllPairsNemenyiTest(
+  score ~ time | id, data = df_long %>% filter(metric == "difficulty")
+  )
 
 # Results!
-
-cat("\nPost-Hoc Wilcoxon Signed-Rank Test Results for Confidence:\n")
-print(pairwise_wilcox_confidence)
-
-cat("\nPost-Hoc Wilcoxon Signed-Rank Test Results for Difficulty:\n")
-print(pairwise_wilcox_difficulty)
+posthocNemenyi_confidence
+posthocNemenyi_difficulty
 
 ```
+(where Group 1 = first time point, Group 2 = second time point, Group 3 = third time point)
+
+* For confidence, a significant difference was found between groups 1 and 2 (p = 0.033). No other pairwise differences were significant.
+
+* For difficulty, a significant difference was found between groups 1 and 3 (p = 0.046. No other pairwise differences were significant.
 
 
 

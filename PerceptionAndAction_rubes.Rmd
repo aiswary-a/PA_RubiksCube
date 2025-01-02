@@ -1,0 +1,435 @@
+---
+title: "PerceptionAndAction_rubes"
+author: "MeiSanderson"
+date: "2024-12-30"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+pacman::p_load(ggplot2,
+               tidyverse,
+               dplyr,
+               dunn.test,
+               Rmisc,
+               Hmisc)
+
+```
+
+## Analysis of experiment data
+
+```{r loading the files}
+
+overlord <- read_csv("PA_RubeCube_Experiment.csv")
+
+## re-naming columns
+colnames(data)
+
+colnames(overlord)[1] <- "Timeslot"
+colnames(overlord)[2] <- "Condition"
+colnames(overlord)[3] <- "Consent"
+colnames(overlord)[4] <- "ParticipantID"
+colnames(overlord)[5] <- "Gender"
+colnames(overlord)[6] <- "Age"
+colnames(overlord)[7] <- "Confidence_1"
+colnames(overlord)[8] <- "Difficulty_1"
+colnames(overlord)[9] <- "Confidence_2"
+colnames(overlord)[10] <- "Difficulty_2"
+colnames(overlord)[11] <- "Confidence_3"
+colnames(overlord)[12] <- "Difficulty_3"
+colnames(overlord)[13] <- "SolveTime"
+overlord$SolveTime <- as.numeric(overlord$SolveTime)
+
+## renaming the conditions to their more concise name
+overlord$Condition[overlord$Condition == "N-E: Novice presenting as Expert"] <- "N_E"
+overlord$Condition[overlord$Condition == "N-N: Novice presenting as Novice"] <- "N_N"
+overlord$Condition[overlord$Condition == "E-N: Expert presenting as Novice"] <- "E_N"
+overlord$Condition[overlord$Condition == "E-E: Expert presenting as Expert"] <- "E_E"
+
+
+## removing the one participant
+data <- filter(overlord, ParticipantID != "SR08")
+
+```
+
+```{r participant stats}
+
+# colnames(data)
+
+
+## OVERALL
+
+cat("DESCRIPTIVE STATS FOR ALL PARTICIPANTS", "\n\n")
+
+## age
+age_mean <- mean(data$Age) ### mean
+age_sd <- sd(data$Age) ### sd
+age_se <- sd(data$Age)/sqrt(length((data$Age))) ### se
+age_median <- median(sort(data$Age)) ### median
+
+cat("Mean age:", age_mean, "Sd age:", age_sd, "SE age:", age_se, "\n", "Median age:", age_median, "\n")
+
+## gender
+gender_count <- table(data$Gender)
+cat("Count of genders: female = ", gender_count[1], "& male = ", gender_count[2], "\n\n\n ")
+
+
+
+## PER CONDITION
+
+cat("DESCRIPTIVE STATS FOR THE CONDITIONS", "\n\n")
+
+### - pro x pro
+
+## age
+age_mean_ee <- mean(filter(data, Condition == "E_E")$Age) ### mean (aka the median since we have only two datapoints)
+age_sd_ee <- sd(filter(data, Condition == "E_E")$Age) ### sd
+age_se_ee <- sd(filter(data, Condition == "E_E")$Age)/sqrt(length((filter(data, Condition == "E_E")$Age))) ### se
+
+cat("Mean age_ee:", age_mean_ee, "Sd age_ee:", age_sd_ee, "SE age_ee:", age_se_ee, "\n")
+
+## gender
+gender_count_ee <- table(filter(data, Condition == "E_E")$Gender)
+cat("Count of genders_ee: female = ", gender_count_ee[1], "& male = ", gender_count_ee[2], "\n\n")
+
+
+
+### pro x novice
+
+## age
+age_mean_en <- mean(filter(data, Condition == "E_N")$Age) ### mean
+age_sd_en <- sd(filter(data, Condition == "E_N")$Age) ### sd
+age_se_en <- sd(filter(data, Condition == "E_N")$Age)/sqrt(length((filter(data, Condition == "E_N")$Age))) ### se
+
+cat("Mean age_en:", age_mean_en, "Sd age_en:", age_sd_en, "SE age_en:", age_se_en, "\n")
+
+## gender
+gender_count_en <- table(filter(data, Condition == "E_N")$Gender)
+cat("Count of genders_en: female = ", gender_count_en[1], "& male = ", gender_count_en[2], "\n\n")
+
+
+### novice x novice
+
+## age
+age_mean_nn <- mean(filter(data, Condition == "N_N")$Age) ### mean
+age_sd_nn <- sd(filter(data, Condition == "N_N")$Age) ### sd
+age_se_nn <- sd(filter(data, Condition == "N_N")$Age)/sqrt(length((filter(data, Condition == "N_N")$Age))) ### se
+
+
+cat("Mean age_nn:", age_mean_nn, "Sd age_nn:", age_sd_nn, "SE age_nn:", age_se_nn, "\n")
+
+## gender
+gender_count_nn <- table(filter(data, Condition == "N_N")$Gender)
+cat("Count of genders_nn: female = ", gender_count_nn[1], "& male = ", gender_count_nn[2], "\n\n")
+
+
+
+### novice x pro
+
+## age
+age_mean_ne <- mean(filter(data, Condition == "N_E")$Age) ### mean
+age_sd_ne <- sd(filter(data, Condition == "N_E")$Age) ### sd
+age_se_ne <- sd(filter(data, Condition == "N_E")$Age)/sqrt(length((filter(data, Condition == "N_E")$Age))) ### se
+
+
+cat("Mean age_ne:", age_mean_ne, "Sd age_ne:", age_sd_ne, "SE age_ne:", age_se_ne, "\n")
+
+## gender
+gender_count_ne <- table(filter(data, Condition == "N_E")$Gender)
+cat("Count of genders_ne: female = ", gender_count_ne[1], "& male = ", gender_count_ne[2], "\n\n")
+
+
+```
+
+## Main hypothesis (RQ, H1) testing
+
+```{r}
+
+## data frame with the conditions and mean solve time for each - not used for t-tests but could have been
+data_dummy <- as.data.frame(data %>% group_by(Condition = as.factor(Condition))
+                              %>% dplyr::summarise(SolveTime = mean(as.numeric(SolveTime))))
+
+
+# - - - - -
+
+
+# BODILY CUES
+cat("BODILY CUES", "\n\n")
+
+
+## nxn and nxe
+currentConditions <- filter(data, Condition == "N_N" | Condition == "N_E")
+
+currentDataFrame <- as.data.frame(currentConditions %>% group_by(Condition)
+                              %>% dplyr::summarise(Performance = mean(as.numeric(SolveTime))))
+
+
+### adding the dummy coded conditions
+data_dummy_nnAndne <- ifelse(currentDataFrame$Condition == "N_N", 1, 0) ### nn = 1, ne = 0
+
+currentDataFrame$Dummy <- data_dummy_nnAndne
+
+
+### testing for normality - not done because of the lack of data points would make any result extremely unreliable
+
+### the non-parametric unpaired two-sample t-test substitute, Wilcoxon Rank Sum Test, is used instead
+cat("non-parametric unpaired two-sample t-test for nxn and nxe:", "\n")
+wilcox.test(Performance ~ Dummy, currentDataFrame, exact = TRUE) ### the small sample size means no reliable evidence for anything no matter the p-value
+
+
+
+
+## exe and exn
+currentConditions <- filter(data, Condition == "E_E" | Condition == "E_N")
+
+currentDataFrame <- as.data.frame(currentConditions %>% group_by(Condition)
+                              %>% dplyr::summarise(Performance = mean(as.numeric(SolveTime))))
+
+### adding the dummy coded conditions
+data_dummy_eeAnden <- ifelse(currentDataFrame$Condition == "E_E", 1, 0) ### ee = 1, en = 0
+
+currentDataFrame$Dummy <- data_dummy_eeAnden
+
+
+### testing for normality - not done because of the lack of data points would make any result extremely unreliable
+
+### the non-parametric unpaired two-sample t-test substitute, Wilcoxon Rank Sum Test, is used instead 
+cat("non-parametric unpaired two-sample t-test for exe and exn:", "\n")
+wilcox.test(Performance ~ Dummy, currentDataFrame, exact = TRUE) ### the small sample size means no reliable evidence for anything no matter the p-value
+
+
+
+# - - - - -
+
+
+# LINGUISTIC CUES
+cat("LINGUISTIC CUES", "\n\n")
+
+## nxn and exn
+currentConditions <- filter(data, Condition == "N_N" | Condition == "E_N")
+
+currentDataFrame <- as.data.frame(currentConditions %>% group_by(Condition)
+                              %>% dplyr::summarise(Performance = mean(as.numeric(SolveTime))))
+
+### adding the dummy coded conditions
+data_dummy_nnAnden <- ifelse(currentDataFrame$Condition == "N_N", 1, 0) ### nn = 1, en = 0
+
+currentDataFrame$Dummy <- data_dummy_nnAnden
+
+
+### testing for normality - not done because of the lack of data points would make any result extremely unreliable
+
+### the non-parametric unpaired two-sample t-test substitute, Wilcoxon Rank Sum Test, is used instead
+cat("non-parametric unpaired two-sample t-test for nxn and exn:", "\n")
+wilcox.test(Performance ~ Dummy, currentDataFrame, exact = TRUE) ### the small sample size means no reliable evidence for anything no matter the p-value
+
+
+# - - - - -
+
+
+# H2
+cat("H2", "\n\n")
+
+
+
+## exe and nxe
+currentConditions <- filter(data, Condition == "E_E" | Condition == "N_E")
+
+currentDataFrame <- as.data.frame(currentConditions %>% group_by(Condition)
+                              %>% dplyr::summarise(Performance = mean(as.numeric(SolveTime))))
+
+### adding the dummy coded conditions
+data_dummy_eeAndne <- ifelse(currentDataFrame$Condition == "E_E", 1, 0) ### ee = 1, ne = 0
+
+currentDataFrame$Dummy <- data_dummy_eeAndne
+
+
+### testing for normality - not done because of the lack of data points would make any result extremely unreliable
+
+### the non-parametric unpaired two-sample t-test substitute, Wilcoxon Rank Sum Test, is used instead 
+cat("non-parametric unpaired two-sample t-test for exe and nxe:", "\n")
+wilcox.test(Performance ~ Dummy, currentDataFrame, exact = TRUE) ### the small sample size means no reliable evidence for anything no matter the p-value
+
+
+
+
+```
+
+
+
+
+
+## H2 testing
+
+```{r}
+
+## nxn and exe
+currentConditions <- filter(data, Condition == "N_N" | Condition == "E_E")
+
+currentDataFrame <- as.data.frame(currentConditions %>% group_by(Condition)
+                              %>% dplyr::summarise(Performance = mean(as.numeric(SolveTime))))
+
+### adding the dummy coded conditions
+data_dummy_nnAndee <- ifelse(currentDataFrame$Condition == "N_N", 1, 0) ### nn = 1, ee = 0
+
+currentDataFrame$Dummy <- data_dummy_nnAndee
+
+
+### testing for normality - not done because of the lack of data points would make any result extremely unreliable
+
+### the non-parametric unpaired two-sample t-test substitute, Wilcoxon Rank Sum Test, is used instead
+cat("non-parametric unpaired two-sample t-test for nxn and exe:", "\n")
+wilcox.test(Performance ~ Dummy, currentDataFrame, exact = TRUE) ### the small sample size means no reliable evidence for anything no matter the p-value
+
+
+### stats - ee
+performance_sd_ee <- sd(filter(data, Condition == "E_E")$SolveTime) ### sd
+performance_se_ee <- sd(filter(data, Condition == "E_E")$SolveTime)/sqrt(length((filter(data, Condition == "E_E")$SolveTime))) ### se
+cat("Mean Performance_ee:", filter(currentDataFrame, Condition == "E_E")$Performance, "& Sd Performance_ee:", performance_sd_ee, "& SE Performance_ee:", performance_se_ee, "\n")
+
+
+### stats - nn
+performance_sd_nn <- sd(filter(data, Condition == "N_N")$SolveTime) ### sd
+performance_se_nn <- sd(filter(data, Condition == "N_N")$SolveTime)/sqrt(length((filter(data, Condition == "N_N")$SolveTime))) ### se
+cat("Mean Performance_nn:", filter(currentDataFrame, Condition == "N_N")$Performance, "& Sd Performance_nn:", performance_sd_nn, "& SE Performance_nn:", performance_se_nn, "\n")
+
+
+# - - - - - 
+
+
+## exn and nxe
+currentConditions <- filter(data, Condition == "E_N" | Condition == "N_E")
+
+currentDataFrame <- as.data.frame(currentConditions %>% group_by(Condition)
+                              %>% dplyr::summarise(Performance = mean(as.numeric(SolveTime))))
+
+### adding the dummy coded conditions
+data_dummy_enAndne <- ifelse(currentDataFrame$Condition == "E_N", 1, 0) ### en = 1, ne = 0
+
+currentDataFrame$Dummy <- data_dummy_enAndne
+
+
+### testing for normality - not done because of the lack of data points would make any result extremely unreliable
+
+### the non-parametric unpaired two-sample t-test substitute, Wilcoxon Rank Sum Test, is used instead
+cat("non-parametric unpaired two-sample t-test for exn and nxe:", "\n")
+wilcox.test(Performance ~ Dummy, currentDataFrame, exact = TRUE) ### the small sample size means no reliable evidence for anything no matter the p-value
+
+
+
+
+### stats - exn
+performance_sd_en <- sd(filter(data, Condition == "E_N")$SolveTime) ### sd
+performance_se_en <- sd(filter(data, Condition == "E_N")$SolveTime)/sqrt(length((filter(data, Condition == "E_N")$SolveTime))) ### se
+cat("Mean Performance_en:", filter(currentDataFrame, Condition == "E_N")$Performance, "& Sd Performance_en:", performance_sd_en, "& SE Performance_en:", performance_se_en, "\n")
+
+
+### stats - nxe
+performance_sd_ne <- sd(filter(data, Condition == "N_E")$SolveTime) ### sd
+performance_se_ne <- sd(filter(data, Condition == "N_E")$SolveTime)/sqrt(length((filter(data, Condition == "N_E")$SolveTime))) ### se
+cat("Mean Performance_ne:", filter(currentDataFrame, Condition == "N_E")$Performance, "& Sd Performance_ne:", performance_sd_ne, "& SE Performance_ne:", performance_se_ne, "\n")
+
+
+
+```
+
+
+
+## ANOVA
+
+```{r}
+
+## data frame with the conditions and mean solve time for each - not used for t-tests but could have been
+data_dummy <- as.data.frame(data %>% group_by(Condition = as.factor(Condition))
+                              %>% dplyr::summarise(Performance = mean(as.numeric(SolveTime))))
+
+
+
+### set contrasts to effects coding
+contrasts(data_dummy$Condition) <- contr.sum(levels(data_dummy$Condition))
+
+
+### the non-parametric anova substitute, kruskal.test, is used instead
+cat("the non-parametric anova substitute for comparing all conditions:", "\n")
+kruskal.test(Performance ~ Condition, data_dummy)
+
+
+### post-hoc testing - Dunn post-hoc testing
+dunn.test(data_dummy$Performance, data_dummy$Condition, method = "bonferroni")
+
+
+
+```
+
+### SPOILER ALERT: no significant results at all
+
+
+## The Descriptive Stats
+
+```{r}
+
+## DESCRIPTIVE STATS: calculated earlier - not much else to calculate :D
+
+
+```
+
+## The Visualisations we make instead
+
+```{r}
+
+# plotting the means of each condition
+ggplot(data_dummy, aes(x = Condition, y = Performance, fill = Condition)) +
+  geom_col() +
+  labs(title = "Plot of Mean Performance Values per Condition",
+       x = "Condition",
+       y = "Mean Performance") +
+  theme_minimal()
+
+
+## same plot with confidence intervals
+ggplot(data, aes(x = Condition, y = as.numeric(SolveTime), fill = Condition)) +
+  stat_summary(fun = mean, geom = "bar") +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = 0.2) +
+  labs(title = "Plot of Mean Performance Values per Condition with 95% CI",
+       x = "Condition",
+       y = "Mean Performance") +
+  theme_minimal()
+
+
+## same plot with standard error
+ggplot(data, aes(x = Condition, y = as.numeric(SolveTime), fill = Condition)) +
+  stat_summary(fun = mean, geom = "bar") +
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.2) +
+  labs(title = "Plot of Mean Performance Values per Condition with Standard Error",
+       x = "Condition",
+       y = "Mean Performance") +
+  theme_minimal()
+
+
+# - - - - - - 
+
+# different themes
+
+ggplot(data, aes(x = Condition, y = as.numeric(SolveTime), fill = Condition)) +
+  stat_summary(fun = mean, geom = "bar") +
+  labs(title = "Plot of Mean Performance Values per Condition",
+       x = "Condition",
+       y = "Mean Performance") +
+  theme_gray()
+
+
+
+
+
+
+
+## VISUALISATIONS: boxplot or histogram, or perhaps scatter plot with the actual datapoints and not mean or maybe add the means or something similar to a bar plot
+
+# plotting the means of each condition in a more bar chart kinda way
+
+
+```
+
+
+

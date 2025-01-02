@@ -383,7 +383,7 @@ ggplot(data_dummy, aes(x = Condition, y = Performance, fill = Condition)) +
   geom_col() +
   labs(title = "Plot of Mean Performance Values per Condition",
        x = "Condition",
-       y = "Mean Performance") +
+       y = "Mean Performance (min)") +
   theme_minimal()
 
 
@@ -393,7 +393,7 @@ ggplot(data, aes(x = Condition, y = as.numeric(SolveTime), fill = Condition)) +
   stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = 0.2) +
   labs(title = "Plot of Mean Performance Values per Condition with 95% CI",
        x = "Condition",
-       y = "Mean Performance") +
+       y = "Mean Performance (min)") +
   theme_minimal()
 
 
@@ -403,7 +403,7 @@ ggplot(data, aes(x = Condition, y = as.numeric(SolveTime), fill = Condition)) +
   stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.2) +
   labs(title = "Plot of Mean Performance Values per Condition with Standard Error",
        x = "Condition",
-       y = "Mean Performance") +
+       y = "Mean Performance (min)") +
   theme_minimal()
 
 
@@ -415,7 +415,7 @@ ggplot(data, aes(x = Condition, y = as.numeric(SolveTime), fill = Condition)) +
   stat_summary(fun = mean, geom = "bar") +
   labs(title = "Plot of Mean Performance Values per Condition",
        x = "Condition",
-       y = "Mean Performance") +
+       y = "Mean Performance (min)") +
   theme_gray()
 
 

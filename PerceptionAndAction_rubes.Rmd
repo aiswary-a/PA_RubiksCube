@@ -283,6 +283,19 @@ cat("non-parametric unpaired two-sample t-test for nxn and exe:", "\n")
 wilcox.test(Performance ~ Dummy, currentDataFrame, exact = TRUE) ### the small sample size means no reliable evidence for anything no matter the p-value
 
 
+### stats - ee
+performance_sd_ee <- sd(filter(data, Condition == "E_E")$SolveTime) ### sd
+performance_se_ee <- sd(filter(data, Condition == "E_E")$SolveTime)/sqrt(length((filter(data, Condition == "E_E")$SolveTime))) ### se
+cat("Mean Performance_ee:", filter(currentDataFrame, Condition == "E_E")$Performance, "& Sd Performance_ee:", performance_sd_ee, "& SE Performance_ee:", performance_se_ee, "\n")
+
+
+### stats - nn
+performance_sd_nn <- sd(filter(data, Condition == "N_N")$SolveTime) ### sd
+performance_se_nn <- sd(filter(data, Condition == "N_N")$SolveTime)/sqrt(length((filter(data, Condition == "N_N")$SolveTime))) ### se
+cat("Mean Performance_nn:", filter(currentDataFrame, Condition == "N_N")$Performance, "& Sd Performance_nn:", performance_sd_nn, "& SE Performance_nn:", performance_se_nn, "\n")
+
+
+# - - - - - 
 
 
 ## exn and nxe
@@ -302,6 +315,22 @@ currentDataFrame$Dummy <- data_dummy_enAndne
 ### the non-parametric unpaired two-sample t-test substitute, Wilcoxon Rank Sum Test, is used instead
 cat("non-parametric unpaired two-sample t-test for exn and nxe:", "\n")
 wilcox.test(Performance ~ Dummy, currentDataFrame, exact = TRUE) ### the small sample size means no reliable evidence for anything no matter the p-value
+
+
+
+
+### stats - exn
+performance_sd_en <- sd(filter(data, Condition == "E_N")$SolveTime) ### sd
+performance_se_en <- sd(filter(data, Condition == "E_N")$SolveTime)/sqrt(length((filter(data, Condition == "E_N")$SolveTime))) ### se
+cat("Mean Performance_en:", filter(currentDataFrame, Condition == "E_N")$Performance, "& Sd Performance_en:", performance_sd_en, "& SE Performance_en:", performance_se_en, "\n")
+
+
+### stats - nxe
+performance_sd_ne <- sd(filter(data, Condition == "N_E")$SolveTime) ### sd
+performance_se_ne <- sd(filter(data, Condition == "N_E")$SolveTime)/sqrt(length((filter(data, Condition == "N_E")$SolveTime))) ### se
+cat("Mean Performance_ne:", filter(currentDataFrame, Condition == "N_E")$Performance, "& Sd Performance_ne:", performance_sd_ne, "& SE Performance_ne:", performance_se_ne, "\n")
+
+
 
 ```
 

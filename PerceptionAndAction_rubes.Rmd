@@ -292,7 +292,7 @@ cat("Mean Performance_ee:", filter(currentDataFrame, Condition == "E_E")$Perform
 ### stats - nn
 performance_sd_nn <- sd(filter(data, Condition == "N_N")$SolveTime) ### sd
 performance_se_nn <- sd(filter(data, Condition == "N_N")$SolveTime)/sqrt(length((filter(data, Condition == "N_N")$SolveTime))) ### se
-cat("Mean Performance_nn:", filter(currentDataFrame, Condition == "N_N")$Performance, "& Sd Performance_nn:", performance_sd_nn, "& SE Performance_nn:", performance_se_nn, "\n")
+cat("Mean Performance_nn:", filter(currentDataFrame, Condition == "N_N")$Performance, "& Sd Performance_nn:", performance_sd_nn, "& SE Performance_nn:", performance_se_nn, "\n\n\n")
 
 
 # - - - - - 
@@ -417,8 +417,6 @@ ggplot(data, aes(x = Condition, y = as.numeric(SolveTime), fill = Condition)) +
        x = "Condition",
        y = "Mean Performance") +
   theme_gray()
-
-
 
 
 

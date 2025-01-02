@@ -218,6 +218,12 @@ cat("non-parametric unpaired two-sample t-test for nxn and exn:", "\n")
 wilcox.test(Performance ~ Dummy, currentDataFrame, exact = TRUE) ### the small sample size means no reliable evidence for anything no matter the p-value
 
 
+# - - - - -
+
+
+# H2
+cat("H2", "\n\n")
+
 
 
 ## exe and nxe

@@ -65,9 +65,10 @@ cat("DESCRIPTIVE STATS FOR ALL PARTICIPANTS", "\n\n")
 ## age
 age_mean <- mean(data$Age) ### mean
 age_sd <- sd(data$Age) ### sd
+age_se <- sd(data$Age)/sqrt(length((data$Age))) ### se
 age_median <- median(sort(data$Age)) ### median
 
-cat("Mean age:", age_mean, "Sd age:", age_sd, "\n", "Median age:", age_median, "\n")
+cat("Mean age:", age_mean, "Sd age:", age_sd, "SE age:", age_se, "\n", "Median age:", age_median, "\n")
 
 ## gender
 gender_count <- table(data$Gender)
@@ -84,8 +85,9 @@ cat("DESCRIPTIVE STATS FOR THE CONDITIONS", "\n\n")
 ## age
 age_mean_ee <- mean(filter(data, Condition == "E_E")$Age) ### mean (aka the median since we have only two datapoints)
 age_sd_ee <- sd(filter(data, Condition == "E_E")$Age) ### sd
+age_se_ee <- sd(filter(data, Condition == "E_E")$Age)/sqrt(length((filter(data, Condition == "E_E")$Age))) ### se
 
-cat("Mean age_ee:", age_mean_ee, "Sd age_ee:", age_sd_ee, "\n")
+cat("Mean age_ee:", age_mean_ee, "Sd age_ee:", age_sd_ee, "SE age_ee:", age_se_ee, "\n")
 
 ## gender
 gender_count_ee <- table(filter(data, Condition == "E_E")$Gender)
@@ -98,8 +100,9 @@ cat("Count of genders_ee: female = ", gender_count_ee[1], "& male = ", gender_co
 ## age
 age_mean_en <- mean(filter(data, Condition == "E_N")$Age) ### mean
 age_sd_en <- sd(filter(data, Condition == "E_N")$Age) ### sd
+age_se_en <- sd(filter(data, Condition == "E_N")$Age)/sqrt(length((filter(data, Condition == "E_N")$Age))) ### se
 
-cat("Mean age_en:", age_mean_en, "Sd age_en:", age_sd_en, "\n")
+cat("Mean age_en:", age_mean_en, "Sd age_en:", age_sd_en, "SE age_en:", age_se_en, "\n")
 
 ## gender
 gender_count_en <- table(filter(data, Condition == "E_N")$Gender)
@@ -111,8 +114,10 @@ cat("Count of genders_en: female = ", gender_count_en[1], "& male = ", gender_co
 ## age
 age_mean_nn <- mean(filter(data, Condition == "N_N")$Age) ### mean
 age_sd_nn <- sd(filter(data, Condition == "N_N")$Age) ### sd
+age_se_nn <- sd(filter(data, Condition == "N_N")$Age)/sqrt(length((filter(data, Condition == "N_N")$Age))) ### se
 
-cat("Mean age_nn:", age_mean_nn, "Sd age_nn:", age_sd_nn, "\n")
+
+cat("Mean age_nn:", age_mean_nn, "Sd age_nn:", age_sd_nn, "SE age_nn:", age_se_nn, "\n")
 
 ## gender
 gender_count_nn <- table(filter(data, Condition == "N_N")$Gender)
@@ -125,8 +130,10 @@ cat("Count of genders_nn: female = ", gender_count_nn[1], "& male = ", gender_co
 ## age
 age_mean_ne <- mean(filter(data, Condition == "N_E")$Age) ### mean
 age_sd_ne <- sd(filter(data, Condition == "N_E")$Age) ### sd
+age_se_ne <- sd(filter(data, Condition == "N_E")$Age)/sqrt(length((filter(data, Condition == "N_E")$Age))) ### se
 
-cat("Mean age_ne:", age_mean_ne, "Sd age_ne:", age_sd_ne, "\n")
+
+cat("Mean age_ne:", age_mean_ne, "Sd age_ne:", age_sd_ne, "SE age_ne:", age_se_ne, "\n")
 
 ## gender
 gender_count_ne <- table(filter(data, Condition == "N_E")$Gender)
@@ -166,7 +173,7 @@ currentDataFrame$Dummy <- data_dummy_nnAndne
 
 ### testing for normality - not done because of the lack of data points would make any result extremely unreliable
 
-### the non-parametric unpaired two-sample t-test substitute, Mann-Whitney U test, is used instead
+### the non-parametric unpaired two-sample t-test substitute, Wilcoxon Rank Sum Test, is used instead
 cat("non-parametric unpaired two-sample t-test for nxn and nxe:", "\n")
 wilcox.test(Performance ~ Dummy, currentDataFrame, exact = TRUE) ### the small sample size means no reliable evidence for anything no matter the p-value
 
@@ -187,7 +194,7 @@ currentDataFrame$Dummy <- data_dummy_eeAnden
 
 ### testing for normality - not done because of the lack of data points would make any result extremely unreliable
 
-### the non-parametric unpaired two-sample t-test substitute, Mann-Whitney U test, is used instead 
+### the non-parametric unpaired two-sample t-test substitute, Wilcoxon Rank Sum Test, is used instead 
 cat("non-parametric unpaired two-sample t-test for exe and exn:", "\n")
 wilcox.test(Performance ~ Dummy, currentDataFrame, exact = TRUE) ### the small sample size means no reliable evidence for anything no matter the p-value
 
@@ -213,7 +220,7 @@ currentDataFrame$Dummy <- data_dummy_nnAnden
 
 ### testing for normality - not done because of the lack of data points would make any result extremely unreliable
 
-### the non-parametric unpaired two-sample t-test substitute, Mann-Whitney U test, is used instead
+### the non-parametric unpaired two-sample t-test substitute, Wilcoxon Rank Sum Test, is used instead
 cat("non-parametric unpaired two-sample t-test for nxn and exn:", "\n")
 wilcox.test(Performance ~ Dummy, currentDataFrame, exact = TRUE) ### the small sample size means no reliable evidence for anything no matter the p-value
 
@@ -240,7 +247,7 @@ currentDataFrame$Dummy <- data_dummy_eeAndne
 
 ### testing for normality - not done because of the lack of data points would make any result extremely unreliable
 
-### the non-parametric unpaired two-sample t-test substitute, Mann-Whitney U test, is used instead 
+### the non-parametric unpaired two-sample t-test substitute, Wilcoxon Rank Sum Test, is used instead 
 cat("non-parametric unpaired two-sample t-test for exe and nxe:", "\n")
 wilcox.test(Performance ~ Dummy, currentDataFrame, exact = TRUE) ### the small sample size means no reliable evidence for anything no matter the p-value
 
@@ -271,7 +278,7 @@ currentDataFrame$Dummy <- data_dummy_nnAndee
 
 ### testing for normality - not done because of the lack of data points would make any result extremely unreliable
 
-### the non-parametric unpaired two-sample t-test substitute, Mann-Whitney U test, is used instead
+### the non-parametric unpaired two-sample t-test substitute, Wilcoxon Rank Sum Test, is used instead
 cat("non-parametric unpaired two-sample t-test for nxn and exe:", "\n")
 wilcox.test(Performance ~ Dummy, currentDataFrame, exact = TRUE) ### the small sample size means no reliable evidence for anything no matter the p-value
 
@@ -292,7 +299,7 @@ currentDataFrame$Dummy <- data_dummy_enAndne
 
 ### testing for normality - not done because of the lack of data points would make any result extremely unreliable
 
-### the non-parametric unpaired two-sample t-test substitute, Mann-Whitney U test, is used instead
+### the non-parametric unpaired two-sample t-test substitute, Wilcoxon Rank Sum Test, is used instead
 cat("non-parametric unpaired two-sample t-test for exn and nxe:", "\n")
 wilcox.test(Performance ~ Dummy, currentDataFrame, exact = TRUE) ### the small sample size means no reliable evidence for anything no matter the p-value
 
